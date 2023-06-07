@@ -37,3 +37,5 @@ target_link_libraries (uWS LINK_PUBLIC pthread)
 install (TARGETS uWS DESTINATION /usr/lib64)
 install (FILES src/Extensions.h src/WebSocketProtocol.h src/Networking.h src/WebSocket.h src/Hub.h src/Group.h src/Node.h src/Socket.h src/HTTPSocket.h src/uWS.h src/uUV.h DESTINATION /usr/include/uWS)
 endif (UNIX)
+
+add_subdirectory(examples)

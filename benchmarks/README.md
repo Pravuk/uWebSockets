@@ -1,44 +1,55 @@
-# More recent benchmarks
-It was a while ago this page was written (and it needs updating), so here are the most recent benchmarks against the top competition we know of:
+# WebSocket echo server benchmarks
+By reading this you have proven yourself to be above 95% of all programmers. Most programmers nowadays give absolutely zero shit to actually *validate* wild and crazy performance claims they stumble upon. You get performance claims shoved down your throat from all over the internet nowadays, but in reality, performance of most software has only degraded over the last 20 years. When I began writing µWebSockets I was blown away by my findings from actually benchmarking these wild claims. Surely I had messed up somehow!
 
-v20 | v21
---- | ---
-![](../misc/fastwebsockets.png) | ![](../misc/fastwebsockets_io_uring.png)
+As opposed to many of the top performance claimers like `Socket.IO` ("FEATURING THE FASTEST AND MOST RELIABLE REAL-TIME ENGINE") and `ws` ("ws: The fastest RFC-6455 WebSocket implementation for Node.js."), I actually aim to be transparent in my benchmarkings, and give you the opportunity to easily validate my claims. Instead of just making up random ass bullshit like these projects do, I actually spent quite the time optimizing µWebSockets.
 
+Hawk eye achievement: You noticed the use of *superlatives* in these descriptions. Quoting Wikipedia: "In grammar, the superlative is the form of an adverb or adjective that is used to signify the greatest degree of a given descriptor." *facepalm*
 
-# Benchmark-driven development
-Making decisions based on scientific benchmarking **while** you develop can guide you to create very efficient solutions if you have the dicipline to follow through. µWebSockets performs with **98%** the theoretical maximum for any user space Linux process [this was written before io_uring was added to Linux] - if anything would ever be faster, it would only be so by less than 2%. We know of no such project.
+### A note about bottlenecks
+Problem number one when benchmarking a server is to actually benchmark *the server*. Quite a few programmers do not realize that if the client that is supposed to benchmark the server is the bottleneck, you are really just benchmarking the client. This is why I supply two highly optimized and specialized benchmarking clients that successfully can stress µWebSockets to 100% CPU usage – something not possible with any of the clients I have tested.
 
-Http | WebSockets
---- | ---
-![](../misc/bigshot_lineup.png) | ![](../misc/websocket_lineup.png)
+## Building instructions
+* Benchmarks depend on Linux & libuv, but you could port them to OS X and Windows if you want
+* WebSocket++ and Boost is needed to build the WebSocket++ echo server (wsPP) - *rly, no shit?!*
+* Node is needed to run the ws.js echo server
 
-Because of the big lead in cleartext performance, it's actually possible to enable TLS 1.3 encryption in µWebSockets and still beat most of the competition in an unfair cleartext-vs-encrypted run. Performance retention of TLS 1.3 encryption with µWebSockets is about 60%, so you do the math.
+Once you have installed `libuv` all you need is to hit `make` inside of uWebSockets/benchmarks (this folder) and you'll get the binaries used in these benchmarks.
 
-All of this is possible thanks to extensive benchmarking of many discarded prototypes & designs during development. The very first thing done in this project was to benchmark the Linux kernel against itself, to get a clear idea of expected maximum performance and thus a performance budget on this platform.
+## Scalability
+The first and in my opinion most valuable benchmark is about scalability. The name µWebSockets is a hint of its small ("micro") WebSockets in terms of memory footprint.
 
-From that point every line of code was benchmarked against the budget and thrown away if it failed the vision. Today µWebSockets does WebSocket messaging without any significant overhead, making it very unlikely to ever be outperformed.
+`Usage: scalability numberOfConnections port`
 
-Of course, memory usage has always been a big factor in this. The name µWebSockets is meant to signify "small WebSockets" and comes from the memory optimizations made throughout. Holding many WebSockets should not require lots of RAM.
+I run this test with 1 million connections on port 3000 when testing µWS, and 500k connections when testing the two other servers (simply because I have no RAM to reach 1 million connections with these servers).
 
-If you're looking for a performant solution, look no further.
+This benchmark will measure the memory usage of the process that listens to the given port, so it can automatically report results like this:
+```
+Connection performance: 72.4323 connections/ms
+Memory performance: 2695.25 connections/mb
+```
 
-## Common benchmarking mistakes
-It is very common, extremely common in fact, that people try and benchmark µWebSockets using a scripted Node.js client such as autocannon, ws, or anything similar. It might seem like an okay method but it really isn't. µWebSockets is 12x faster than Node.js, so trying to stress µWebSockets using Node.js is almost impossible. Maybe if you have a 16-core CPU and dedicate 15 cores to Node.js and 1 core to µWebSockets.
+## Throughput
+The second benchmark is a little more complex as it takes 4 arguments:
 
-So whatever you do, it is of greatest importance that you actually **do check and make sure that µWebSockets is being stressed to 100% CPU-time** before noting the result. If it isn't, then you're not really benchmarking µWebSockets - you're benchmarking your client, trying to stress µWebSockets! Please don't make this mistake.
+`Usage: throughput numberOfConnections payloadByteSize framesPerSend port`
 
-## Why "hello world" benchmarking?
+#### Short message throughput
+These are the arguments I supply to benchmark the "short message throughput":
 
-Contrary to popular belief, "hello world benchmarks" are the most accurate and realistic gauges of performance for the kind of applications µWebSockets is designed for:
+`./throughput 10000 20 10 3000`
 
-* IO-gaming (latency)
-* Signalling (memory overhead)
-* Trading (latency)
-* Finance (latency)
-* Chatting (memory overhead)
-* Notifications (memory overhead)
+This will connect 10k users and start to iterate while taking the time between iteration. Every iteration will send 10k messages spread over randomly chosen sockets. The payload is 20 byte long and every send is a pack of 10 frames.
 
-Most business applications of the above mentioned categories are implemented without a central on-disk DB, blocking or severely limiting hot-path performance. As such, web IO becomes a significant part of overall bottleneck, if not the only bottleneck. Message echoing of around 1-16 kB or even as small as 512 bytes is a good test of the overall server plumbing (receive -> timeout clear -> emit to app -> timeout set -> send) for these applications.
+Output is in the form of "echoes per millisecond" and is averaged over the entire time the benchmark runs. If you send a pack of 10 messages per send, these will count as 10 messages.
 
-Of course, if you build an app that *absolutely must* have an on-disk SQL DB central to all hot-paths, then µWebSockets is not the right tool for your app. Keep in mind that, finding a case where µWebSockets makes no difference, does not mean µWebSockets never makes a difference.
+##### Plausible controversy
+There is this thing called confirmation bias - when one wants to badly "prove" their stance they can easily get carried away by making up invalid proofs. Since I wrote the server, and I also wrote the benchmark and supplied the arguments to it, there is a plausible controversy that I will discuss.
+
+There is one way to achieve a far smaller difference between the servers, and that is by supplying `1` as the argument for framesPerSend. This will not stress the WebSocket protocol parser as much, but rather only stress the epoll/event system. That's why I want to supply 10 to really stress the server maximally. If you supply `1` here, the difference between `ws` and `µWS` will drop from about 33x to 6x, and the difference between `WebSocket++` and `µWS` will drop from 3x to 2x. Personally, I think it is fair to supply 10 - otherwise you are not really benchmarking anything else than the event system.
+
+#### Huge message throughput
+There is no controversy involved in the huge message throughput benchmark, just run this and it will send 100mb of payload as fast as the server manages to echo it back:
+
+`./throughput 1 104857600 1 3000`
+
+*Happy benchmarkings!*

@@ -1,83 +1,128 @@
+<div align="center"><img src="images/logo.png"/></div>
+`µWS` is one of the most lightweight, efficient & scalable WebSocket & HTTP server implementations available. It features an easy-to-use, fully async object-oriented interface and scales to millions of connections using only a fraction of memory compared to the competition. While performance and scalability are two of our top priorities, we consider security, stability and standards compliance paramount. License is zlib/libpng (very permissive & suits commercial applications).
 
-<div align="center">
-<img src="https://raw.githubusercontent.com/uNetworking/uWebSockets/master/misc/logo.svg" height="180" /><br>
-<i>Simple, secure</i><sup><a href="https://github.com/uNetworking/uWebSockets/tree/master/fuzzing#fuzz-testing-of-various-parsers-and-mocked-examples">1</a></sup><i> & standards compliant</i><sup><a href="https://unetworking.github.io/uWebSockets.js/report.pdf">2</a></sup><i> web server for the most demanding</i><sup><a href="https://github.com/uNetworking/uWebSockets/tree/master/benchmarks#benchmark-driven-development">3</a></sup><i> of applications.</i> <a href="https://github.com/uNetworking/uWebSockets/blob/master/misc/READMORE.md">Read more...</a>
-<br><br>
+* Autobahn tests [all pass](http://htmlpreview.github.io/?https://github.com/uWebSockets/uWebSockets/blob/master/autobahn/index.html).
+* Significantly outperforms `WebSocket++`, `libwebsockets`, `Beast`, `Crow`, `Gorilla`, `Kaazing Gateway`, `ws` and `Socket.IO` in every tested dimension (see benchmark table below).
+* Outperforms `Apache`, `Node.js`, `NGINX` by at least 4x in HTTP requests per second.
+* Linux, OS X & Windows support.
+* Valgrind / AddressSanitizer clean.
+* Built-in load balancing and multi-core scalability.
+* SSL/TLS support & integrates with foreign HTTPS servers.
+* Permessage-deflate built-in.
+* Node.js binding exposed as the well-known `ws` interface (`uws` is at least 20x faster and 20x more scalable).
 
-<a href="https://github.com/uNetworking/uWebSockets/releases"><img src="https://img.shields.io/github/v/release/uNetworking/uWebSockets"></a> <a href="https://osv.dev/list?q=uwebsockets&affected_only=true&page=1&ecosystem=OSS-Fuzz"><img src="https://oss-fuzz-build-logs.storage.googleapis.com/badges/uwebsockets.svg" /></a> <img src="https://img.shields.io/badge/downloads-70%20million-pink" />
+[![npm version](https://badge.fury.io/js/uws.svg)](https://badge.fury.io/js/uws) [![](https://api.travis-ci.org/uWebSockets/uWebSockets.svg?branch=master)](https://travis-ci.org/uWebSockets/uWebSockets) [![](images/patreon.png)](https://www.patreon.com/uWebSockets)
 
-</div>
-<br><br>
+## Benchmarks table - [validate](https://github.com/alexhultman/uWebSockets/tree/master/benchmarks#websocket-echo-server-benchmarks)
+Implementation | User space memory scaling | Connection performance | Short message throughput | Huge message throughput
+--- | --- | --- | --- | ---
+Beast 1.0.0 b17 | µWS is **7x** as lightweight :+1: | µWS is **4x** as performant | µWS is **22x** as performant | µWS is **3x** as performant
+libwebsockets 2.0 | µWS is **11x** as lightweight | µWS is **equal** in performance :+1: | µWS is **6x** as performant | µWS is **4x** as performant
+Crow [Sep 21] | µWS is **13x** as lightweight | µWS is **2x** as performant | µWS is **12x** as performant | unable to measure
+Gorilla e8f0f8a | µWS is **46x** as lightweight | µWS is **3x** as performant | µWS is **5x** as performant :open_mouth: | data missing
+ws v1.1.0 + binary addons | µWS is **47x** as lightweight | µWS is **18x** as performant | µWS is **33x** as performant | µWS is **2x** as performant
+Kaazing Gateway Community 5.0.0 | µWS is **62x** as lightweight | µWS is **15x** as performant | µWS is **18x** as performant | unable to measure
+Socket.IO 1.5.1 | µWS is **62x** as lightweight | µWS is **42x** as performant :-1: | µWS is **61x** as performant :-1: | data missing
+WebSocket++ v0.7.0 | µWS is **63x** as lightweight :-1: | µWS is **4x** as performant | µWS is **3x** as performant :+1: | µWS is **2x** as performant :+1:
 
-### :closed_lock_with_key: Optimized security
-Being meticulously optimized for speed and memory footprint, µWebSockets is fast enough to do encrypted TLS 1.3 messaging quicker than most alternative servers can do even unencrypted, cleartext messaging<sup><a href="https://github.com/uNetworking/uWebSockets/tree/master/benchmarks#benchmark-driven-development">3</a></sup>.
+*Benchmarks are run with default settings in all libraries, except for `ws` which is run with the native performance addons. These results were achieved with the native C++ server, not the Node.js addon. Expect worse performance and scalability when using Node.js (don't worry, the Node.js addon will run circles around `ws`).*
 
-Furthermore, we partake in Google's OSS-Fuzz with a ~95% daily fuzzing coverage<sup><a href="https://github.com/uNetworking/uWebSockets/blob/master/misc/Screenshot_20210915-004009.png?raw=true">4</a></sup> with no sanitizer issues. LGTM scores us flawless A+ from having zero CodeQL alerts and we compile with pedantic warning levels.
+### HTTP benchmarks
+![](images/wrk_benchmark.png)
 
+*HTTP 1.1 benchmark using wrk. All servers but Apache are single threaded and all serve a static page with no PHP, database queries or similar. Apache performance is estimated by dividing its multi-process performance by number of CPU cores.*
 
-### :arrow_forward: Rapid scripting
-µWebSockets is written entirely in C & C++ but has a seamless integration for Node.js backends. This allows for rapid scripting of powerful apps, using widespread competence. See <a href="https://github.com/uNetworking/uWebSockets.js">µWebSockets.js</a>.
+![](images/pipelining_benchmark.png)
 
-Besides this Node.js integration, you can also [use Bun](https://bun.sh) where µWebSockets is the built-in web server.
+*Experimental HTTP 1.1 benchmark using wrk + Japronto's own (ridiculous) pipeline script.*
 
-### :crossed_swords: Battle proven
-We've been fully standards compliant with a perfect Autobahn|Testsuite score since 2016<sup><a href="https://unetworking.github.io/uWebSockets.js/report.pdf">2</a></sup>. µWebSockets powers many of the biggest crypto exchanges in the world, handling trade volumes of multiple billions of USD every day. If you trade crypto, chances are you do so via µWebSockets.
+## Built with µWS
+<div align="center"><img src="images/builtwithuws.png"/></div>
 
-### :battery: Batteries included
-Designed around a convenient URL router with wildcard & parameter support - paired with efficient pub/sub features for WebSockets. µWebSockets should be the obvious, complete starting point for any real-time web project with high demands.
+## Usage
 
-Start building your Http & WebSocket apps in no time; <a href="https://github.com/uNetworking/uWebSockets/blob/master/misc/READMORE.md">read the user manual</a> and <a href="https://github.com/uNetworking/uWebSockets/tree/master/examples">see examples</a>. You can browse our <a href="https://unetworking.github.io/uWebSockets.js/generated/">TypeDoc</a> for a quick overview.
+### C++
+`µWebSockets` is a high performance C++ library with optional bindings to Node.js. It is greatly recommended investing in a proper C++ implementation if performance and memory scalability is considered critical for the solution in whole. The C++ interface has been designed for simplicity and only requires you to write a few lines of code to get a working server:
 
 ```c++
-uWS::SSLApp({
+#include <uWS.h>
 
-    /* These are the most common options, fullchain and key. See uSockets for more options. */
-    .cert_file_name = "cert.pem",
-    .key_file_name = "key.pem"
-    
-}).get("/hello", [](auto *res, auto *req) {
+int main()
+{
+    uWS::Hub h;
 
-    /* You can efficiently stream huge files too */
-    res->writeHeader("Content-Type", "text/html; charset=utf-8")->end("Hello HTTP!");
-    
-}).ws<UserData>("/*", {
+    h.onMessage([](uWS::WebSocket<uWS::SERVER> ws, char *message, size_t length, uWS::OpCode opCode) {
+        ws.send(message, length, opCode);
+    });
 
-    /* Just a few of the available handlers */
-    .open = [](auto *ws) {
-        ws->subscribe("oh_interesting_subject");
-    },
-    .message = [](auto *ws, std::string_view message, uWS::OpCode opCode) {
-        ws->send(message, opCode);
-    }
-    
-}).listen(9001, [](auto *listenSocket) {
-
-    if (listenSocket) {
-        std::cout << "Listening on port " << 9001 << std::endl;
-    } else {
-        std::cout << "Failed to load certs or to bind to port" << std::endl;
-    }
-    
-}).run();
+    h.listen(3000);
+    h.run();
+}
 ```
-### :briefcase: Commercially supported
-<a href="https://github.com/uNetworking">uNetworking AB</a> is a Swedish consulting & contracting company dealing with anything related to µWebSockets; development, support and customer success.
 
-Don't hesitate <a href="mailto:alexhultman@gmail.com">sending a mail</a> if you're building something large, in need of advice or having other business inquiries in mind. We'll figure out what's best for both parties and make sure you're not falling into common pitfalls.
+### Node.js
+We built `µWS` with the existing Node.js infrastructure in mind. That's why we target the widespread `ws` interface, allowing us to seamlessly integrate with already existing projects. You simply swap `require('ws')` with `require('uws')`:
 
-Special thanks to BitMEX, Bitfinex, Google, Coinbase, Bitwyre, AppDrag and deepstreamHub for allowing the project itself to thrive on GitHub since 2016 - this project would not be possible without these beautiful companies.
+```javascript
+var WebSocketServer = require('uws').Server;
+var wss = new WebSocketServer({ port: 3000 });
 
-### :wrench: Customizable architecture
-µWebSockets builds on <a href="https://github.com/uNetworking/uSockets">µSockets</a>, a foundation library implementing eventing, networking and cryptography in three different layers. Every layer has multiple implementations and you control the compiled composition with flags. There are currently five event-loop integrations; libuv, ASIO, GCD and raw epoll/kqueue.
+function onMessage(message) {
+    console.log('received: ' + message);
+}
 
-In a nutshell:
+wss.on('connection', function(ws) {
+    ws.on('message', onMessage);
+    ws.send('something');
+});
+```
 
-* `WITH_WOLFSSL=1 WITH_LIBUV=1 make examples` builds examples utilizing WolfSSL and libuv
-* `WITH_OPENSSL=1 make examples` builds examples utilizing OpenSSL and the native kernel
+##### Deviations from ws
+There are some important incompatibilities with `ws` though, we aim to be ~90% compatible but will never implement behavior that is deemed too inefficient:
 
-See µSockets for an up-to-date list of flags and a more detailed explanation.
+* Binary data is passed zero-copy as an `ArrayBuffer`. This means you need to copy it to keep it past the callback. It also means you need to convert it with `Buffer.from(message)` if you expect a `Node.js Buffer`.
+* `webSocket._socket` is not a `net.Socket`, it is just a getter function with very basic functionalities.
+* `webSocket._socket.remote...` might fail, you need to cache it at connection.
+* `webSocket` acts like an `EventEmitter` with one listener per event maximum.
+* `webSocket.upgradeReq` is only valid during execution of the connection handler. If you want to keep properties of the upgradeReq for the entire lifetime of the webSocket you better attach that specific property to the webSocket at connection.
 
-### :handshake: Permissively licensed
-Intellectual property, all rights reserved.
+##### Notable projects defaulting to µWS
+`µWS` is the default engine in recent versions of [deepstream.io](http://deepstream.io/), [SocketCluster](http://socketcluster.io) and [Socket.IO](http://socket.io).
 
-Where such explicit notice is given, source code is licensed Apache License 2.0 which is a permissive OSI-approved license with very few limitations. Modified "forks" should be of nothing but licensed source code, and be made available under another product name. If you're uncertain about any of this, please ask before assuming.
+*While having a fast low level engine by default certainly helps when it comes to efficiency, you still need to watch out for wrapper overhead. Some of these projects have been shown to add up to 10x in throughput overhead. Always check your numbers before jumping the gun. Take Sails.js for one, it wraps ExpressJS and performs 13x worse than ExpressJS, while ExpressJS wraps Node.js and performs 3x worse than Node.js. Comparing Sails.js with µWS in HTTP requests per second gives a 300x difference in performance. Many projects in the Node.js sphere are just wrappers of wrappers of wrappers which add astronomical overhead. Roughly speaking, the fewer NPM modules you can use the better.*
+
+##### Not quite there yet
+You can set 'uws' as transformer in **Primus**:
+```javascript
+var primus = new Primus(server, { transformer: 'uws' });
+```
+
+## Installation
+### Node.js developers
+[![](https://nodei.co/npm/uws.png)](https://www.npmjs.com/package/uws)
+
+* Node.js 4.x, 5.x & 6.x supported (Windows version requires Node.js 6.4.0+)
+* Linux, Mac OS X & Windows supported
+* `gcc` >= 4.8.0 and `make` (or compatible) are required to build from source. This translates to Visual Studio >= 2015 on Windows and Clang >= 3.3 on macOS.
+
+On installation, the module will be attempted to be build from source. If that fails, it will attempt to fall back to prebuilt modules which are provided for most platforms. If that fails too, `uws` will throw on `require`.
+
+### C++ developers
+#### Dependencies
+First of all you need to install the required dependencies. On Unix systems this is typically done via package managers, like [homebrew](http://brew.sh) in the case of OS X or `dnf` in the case of Fedora Linux. On Windows you need to search the web for pre-compiled binaries or simply compile the dependencies yourself.
+
+* libuv 1.3+
+* OpenSSL 1.0.x
+* zlib 1.x
+* CMake 3.x
+
+#### Compilation
+Obviously you will need to clone this repo to get the sources. We use CMake as build system.
+
+* `git clone https://github.com/uWebSockets/uWebSockets.git && cd uWebSockets`
+* `cmake .`
+
+Now, on Unix systems it should work by simply running `make`. Run [sudo] `make install` as you wish.
+
+##### Windows, in all its glory
+If you are running Windows you should now have a bunch of Visual Studio project files and one solution file. Open the solution file, now you need to make sure the header include paths and library paths are all set according to where you installed the dependencies. You might also need to change the names of the libraries being linked against, all according to the names of the installed library files. You know the drill.

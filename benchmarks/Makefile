@@ -1,8 +1,14 @@
 default:
-	g++ -flto -march=native parser.cpp -O3 -I../uSockets/src -o parser
-	clang -flto -O3 -DLIBUS_USE_OPENSSL -I../uSockets/src ../uSockets/src/*.c ../uSockets/src/eventing/*.c ../uSockets/src/crypto/*.c broadcast_test.c load_test.c scale_test.c -c
-	clang++ -flto -O3 -DLIBUS_USE_OPENSSL -I../uSockets/src ../uSockets/src/crypto/*.cpp -c -std=c++17
-	clang++ -flto -O3 -DLIBUS_USE_OPENSSL `ls *.o | grep -Ev "load_test|scale_test"` -lssl -lcrypto -o broadcast_test
-	clang++ -flto -O3 -DLIBUS_USE_OPENSSL `ls *.o | grep -Ev "broadcast_test|scale_test"` -lssl -lcrypto -o load_test
-	clang++ -flto -O3 -DLIBUS_USE_OPENSSL `ls *.o | grep -Ev "broadcast_test|load_test"` -lssl -lcrypto -o scale_test
-
+	$(CXX) -std=c++11 -O3 scalability.cpp -s -o scalability -lpthread
+	$(CXX) -std=c++11 -O3 throughput.cpp -s -o throughput -luv
+	$(CXX) -std=c++11 -O3 scalability_socketio.cpp -s -o scalability_socketio -lpthread
+	$(CXX) -std=c++11 -O3 throughput_socketio.cpp -s -o throughput_socketio -luv
+	$(CXX) -std=c++11 -O3 -I ../src ../src/Extensions.cpp ../src/Group.cpp ../src/WebSocketImpl.cpp ../src/Networking.cpp ../src/Hub.cpp ../src/Node.cpp ../src/WebSocket.cpp ../src/HTTPSocket.cpp ../src/Socket.cpp uWS.cpp -o uWS -luv -lcrypto -lssl -lz -s
+	$(CXX) -std=c++11 -O3 lws.cpp -o lws /usr/lib/libwebsockets.a -lev -lssl -lz -lcrypto
+	$(CXX) -std=c++11 -O3 wsPP.cpp -s -o wsPP -lpthread -lboost_system -lboost_random -lssl -lcrypto
+clean:
+	rm -f scalability
+	rm -f throughput
+	rm -f uWS
+	rm -f lws
+	rm -f wsPP

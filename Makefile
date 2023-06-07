@@ -1,20 +1,20 @@
-# This is the NMake shim for Windows (WIP)
-# Example: $Env:WITH_ZLIB='0'; $ENV:WITH_LTO='0'; $Env:CC='clang'; $ENV:CFLAGS='-I C:\vcpkg\installed\x64-windows\include'; $ENV:LDFLAGS='-L C:\vcpkg\installed\x64-windows\lib'; $ENV:CXX='clang++'; $ENV:EXEC_SUFFIX='.exe'; $ENV:WITH_LIBUV='1'; nmake
-
-examples: default
-	.\build.exe examples || .\a.exe examples
-
-clean: default
-	.\build.exe clean || .\a.exe clean
-
-capi: default
-	.\build.exe capi || .\a.exe capi
-
-all: default
-	.\build.exe all || .\a.exe all
+CPP_SHARED := -std=c++11 -O3 -I src -shared -fPIC src/Extensions.cpp src/Group.cpp src/WebSocketImpl.cpp src/Networking.cpp src/Hub.cpp src/Node.cpp src/WebSocket.cpp src/HTTPSocket.cpp src/Socket.cpp src/uUV.cpp
+CPP_OSX := -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup
+CPP_EXPERIMENTAL := -DUSE_MICRO_UV
 
 default:
-	cd uSockets
-	$(CC) $(CFLAGS) -DLIBUS_NO_SSL -std=c11 -Isrc -O3 -c src/*.c src/eventing/*.c src/crypto/*.c
-	cd ..
-	$(CC) build.c
+	make `(uname -s)`
+experimental:
+	g++ $(CPP_SHARED) $(CPP_EXPERIMENTAL) -s -o libuWS.so
+Linux:
+	g++ $(CPP_SHARED) -s -o libuWS.so
+Darwin:
+	g++ $(CPP_SHARED) $(CPP_OSX) -o libuWS.so
+.PHONY: install
+install:
+	if [ -d "/usr/lib64" ]; then cp libuWS.so /usr/lib64/; else cp libuWS.so /usr/lib/; fi
+	mkdir -p /usr/include/uWS
+	cp src/*.h /usr/include/uWS/
+.PHONY: clean
+clean:
+	rm libuWS.so
